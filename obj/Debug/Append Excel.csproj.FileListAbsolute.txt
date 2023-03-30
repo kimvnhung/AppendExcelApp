@@ -1,0 +1,11 @@
+E:\Freelancer\firstjob\Append Excel\bin\Debug\Append Excel.exe.config
+E:\Freelancer\firstjob\Append Excel\bin\Debug\Append Excel.exe
+E:\Freelancer\firstjob\Append Excel\bin\Debug\Append Excel.pdb
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.csproj.AssemblyReference.cache
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.csproj.SuggestedBindingRedirects.cache
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append_Excel.Form1.resources
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append_Excel.Properties.Resources.resources
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.csproj.GenerateResource.cache
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.csproj.CoreCompileInputs.cache
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.exe
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.pdb
