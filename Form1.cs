@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
@@ -15,6 +16,7 @@ namespace Append_Excel
     {
         private string mLastOpenFolder = @"E:\Freelancer\firstjob";
         private List<string> mSelectedFile = new List<string>();
+        private bool mIsProcessing = false;
 
         public Form1()
         {
@@ -42,6 +44,57 @@ namespace Append_Excel
                     mSelectedFile.Add(fileName);
                     selectedFileList.Items.Add(System.IO.Path.GetFileName(fileName));
                 }
+            }
+        }
+
+        private void appendBtn_Click(object sender, EventArgs e)
+        {
+            if (mSelectedFile.Count == 0) {
+                MessageBox.Show("Has no file to merge!","Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var saveDialog = new SaveFileDialog
+            {
+                InitialDirectory = mLastOpenFolder,
+                FileName = System.IO.Path.GetFileName(mLastOpenFolder),
+                Filter = "Excel Files (*.xlsx;)|*.xlsx;|CSV Files(*.csv)|*.csv",
+                Title = "Save Files",
+                
+            };
+
+            if (saveDialog.ShowDialog() == DialogResult.OK)
+            {
+                string fileName = saveDialog.FileName;
+                Task.Run(startProcessing);
+            }
+        }
+
+        private async Task startProcessing()
+        {
+            mIsProcessing = true;
+            updateView();
+            Thread.Sleep(2000);
+            mIsProcessing = false;
+            updateView();
+        }
+
+
+        private void updateView() 
+        {
+            if (mIsProcessing)
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    appendBtn.Text = "Cancel";
+                });
+            }
+            else
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    appendBtn.Text = "Append";
+                });
             }
         }
     }

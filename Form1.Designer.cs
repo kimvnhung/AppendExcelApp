@@ -76,6 +76,7 @@
             this.appendBtn.TabIndex = 3;
             this.appendBtn.Text = "Append";
             this.appendBtn.UseVisualStyleBackColor = true;
+            this.appendBtn.Click += new System.EventHandler(this.appendBtn_Click);
             // 
             // progressBar1
             // 
