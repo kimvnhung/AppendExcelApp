@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Office.Interop.Excel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,8 @@ namespace Append_Excel
 
         private bool mIsProcessing = false;
         private int mPercentageProcess = 0;
+        private int mExecutedTime = 0;
+        private int mEstimateTime = 0;
 
         public bool IsProcessing { 
             private set { 
@@ -34,21 +37,71 @@ namespace Append_Excel
             }
             get { return mPercentageProcess; } 
         }
+
+        public int ExceutedTime
+        {
+            private set
+            {
+                if (value != mExecutedTime)
+                {
+                    mExecutedTime = value;
+                    OnStatusChanged() ;
+                }
+            }
+            get { return mExecutedTime; }
+        }
+
+        public int EstimatedTime { 
+            private set
+            {
+                if( value != mEstimateTime)
+                {
+                    mEstimateTime = value;
+                    OnStatusChanged();
+                }
+            }
+            get { return mEstimateTime; } 
+        }
         public AppendHandler() { }
 
 
-        public async Task StartProcessing()
+        public async Task StartProcessing(List<string> selectedFiles)
         {
-            PercentageProcess = 0;
+            _ = TimeEstimateHandler();
             IsProcessing = true;
-            await Task.Delay(1000);
-            PercentageProcess = 20;
-            await Task.Delay(1000);
-            PercentageProcess = 80;
-            await Task.Delay(1000);
-            PercentageProcess = 100;
+            
             IsProcessing = false;
 
+        }
+
+        public async Task TimeEstimateHandler()
+        {
+            DateTime start = DateTime.Now;
+            while (PercentageProcess >= 0 && PercentageProcess < 100)
+            {
+                await Task.Delay(100);
+
+                TimeSpan elapsed = DateTime.Now - start;
+
+                ExceutedTime = (int)elapsed.TotalMilliseconds;
+                EstimatedTime = ExceutedTime * 100 / PercentageProcess;
+            }
+        }
+
+        private async Task<List<Worksheet>> OpenDataFiles(List<string> selectedFiles)
+        {
+            await Task.Delay(100);
+            return new List<Worksheet>();
+        }
+
+        private async Task<bool> Appending(List<Worksheet> workSheets)
+        {
+            return false;
+        }
+
+        private async Task<bool> SaveFile(string filePath)
+        {
+            return false;
         }
 
         protected virtual void OnStatusChanged() {

@@ -30,11 +30,11 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.selectedFileList = new System.Windows.Forms.ListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.openFileBtn = new System.Windows.Forms.Button();
             this.appendBtn = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.processStatusLb = new System.Windows.Forms.Label();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SuspendLayout();
             // 
             // label1
@@ -57,6 +57,10 @@
             this.selectedFileList.TabIndex = 1;
             this.selectedFileList.UseCompatibleStateImageBehavior = false;
             this.selectedFileList.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Width = 256;
             // 
             // openFileBtn
             // 
@@ -88,15 +92,11 @@
             // processStatusLb
             // 
             this.processStatusLb.AutoSize = true;
-            this.processStatusLb.Location = new System.Drawing.Point(354, 219);
+            this.processStatusLb.Location = new System.Drawing.Point(704, 222);
             this.processStatusLb.Name = "processStatusLb";
             this.processStatusLb.Size = new System.Drawing.Size(37, 13);
             this.processStatusLb.TabIndex = 5;
             this.processStatusLb.Text = "Status";
-            // 
-            // columnHeader1
-            // 
-            this.columnHeader1.Width = 256;
             // 
             // Form1
             // 

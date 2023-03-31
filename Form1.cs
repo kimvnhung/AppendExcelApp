@@ -34,11 +34,13 @@ namespace Append_Excel
             {
                 this.Invoke((MethodInvoker)delegate
                 {
+                    openFileBtn.Enabled = false;
                     appendBtn.Text = "Cancel";
                     if (mHandler.PercentageProcess >= 0 && mHandler.PercentageProcess <= 100)
                     {
                         progressBar1.Value = mHandler.PercentageProcess;
                     }
+                    processStatusLb.Text = MillisecondsToTimeString(mHandler.ExceutedTime)+"/"+MillisecondsToTimeString(mHandler.ExceutedTime);
                 });
 
             }
@@ -47,8 +49,20 @@ namespace Append_Excel
                 this.Invoke((MethodInvoker)delegate
                 {
                     appendBtn.Text = "Append";
+                    openFileBtn.Enabled = true;
+                    progressBar1.Value = 0;
+
                 });
             }
+        }
+
+        public static string MillisecondsToTimeString(long milliseconds)
+        {
+            TimeSpan time = TimeSpan.FromMilliseconds(milliseconds);
+            return string.Format("{0:D2}h{1:D2}m{2:D2}s",
+                (int)time.TotalHours,
+                time.Minutes,
+                time.Seconds);
         }
 
         private void openFileBtn_Click(object sender, EventArgs e)
@@ -73,7 +87,7 @@ namespace Append_Excel
             }
         }
 
-        private void appendBtn_Click(object sender, EventArgs e)
+        private async void appendBtn_Click(object sender, EventArgs e)
         {
             if (mSelectedFile.Count == 0) {
                 MessageBox.Show("Has no file to merge!","Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -92,7 +106,7 @@ namespace Append_Excel
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = saveDialog.FileName;
-                Task.Run(mHandler.StartProcessing);
+                _ = mHandler.StartProcessing(mSelectedFile);
             }
         }
     }
