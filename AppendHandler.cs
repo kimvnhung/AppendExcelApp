@@ -103,7 +103,7 @@ namespace Append_Excel
                 if (await Appending(wbHandle))
                 {
                     await SaveFile(wbResult, wbHandle, savePath);
-                    Message = "Save file to " + savePath;
+                    Message = "Saved file to " + savePath;
                     wbResult.Close(true);
                     wbHandle.Close(false);
                     mExcel.Quit();
@@ -358,10 +358,13 @@ namespace Append_Excel
                     System.Reflection.Missing.Value, System.Reflection.Missing.Value).Row;
 
                 // Get the range of data to copy from worksheet2
-                Range rangeToCopy = worksheet2.UsedRange;
+                Range usedRange = worksheet2.UsedRange;
+                Range rangeToCopy = usedRange.Offset[1, 0].Resize[usedRange.Rows.Count - 1, usedRange.Columns.Count];
+
 
                 // Paste the range into worksheet1
                 rangeToCopy.Copy(worksheet1.Cells[lastUsedRow + 1, 1]);
+
             }catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
@@ -376,10 +379,10 @@ namespace Append_Excel
             {
                 File.Delete(filePath);
             }
-            foreach (Worksheet ws in wbHandle.Worksheets)
-            {
-                PrintData(ws);
-            }
+            //foreach (Worksheet ws in wbHandle.Worksheets)
+            //{
+            //    PrintData(ws);
+            //}
 
             Copy(wbHandle.Worksheets[1], wbResult.Worksheets[1]);
 
