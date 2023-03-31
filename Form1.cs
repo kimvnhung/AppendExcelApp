@@ -16,13 +16,39 @@ namespace Append_Excel
     {
         private string mLastOpenFolder = @"E:\Freelancer\firstjob";
         private List<string> mSelectedFile = new List<string>();
-        private bool mIsProcessing = false;
+        private AppendHandler mHandler;
 
         public Form1()
         {
             InitializeComponent();
             selectedFileList.HeaderStyle = ColumnHeaderStyle.None;
             selectedFileList.View = View.Details;
+
+            mHandler = new AppendHandler();
+            mHandler.StatusChanged += MHandler_StatusChanged;
+        }
+
+        private void MHandler_StatusChanged(object sender, EventArgs e)
+        {
+            if (mHandler.IsProcessing)
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    appendBtn.Text = "Cancel";
+                    if (mHandler.PercentageProcess >= 0 && mHandler.PercentageProcess <= 100)
+                    {
+                        progressBar1.Value = mHandler.PercentageProcess;
+                    }
+                });
+
+            }
+            else
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    appendBtn.Text = "Append";
+                });
+            }
         }
 
         private void openFileBtn_Click(object sender, EventArgs e)
@@ -66,35 +92,7 @@ namespace Append_Excel
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = saveDialog.FileName;
-                Task.Run(startProcessing);
-            }
-        }
-
-        private async Task startProcessing()
-        {
-            mIsProcessing = true;
-            updateView();
-            Thread.Sleep(2000);
-            mIsProcessing = false;
-            updateView();
-        }
-
-
-        private void updateView() 
-        {
-            if (mIsProcessing)
-            {
-                this.Invoke((MethodInvoker)delegate
-                {
-                    appendBtn.Text = "Cancel";
-                });
-            }
-            else
-            {
-                this.Invoke((MethodInvoker)delegate
-                {
-                    appendBtn.Text = "Append";
-                });
+                Task.Run(mHandler.StartProcessing);
             }
         }
     }
