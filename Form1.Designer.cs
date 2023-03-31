@@ -94,6 +94,7 @@
             // processStatusLb
             // 
             this.processStatusLb.AutoSize = true;
+            this.processStatusLb.ForeColor = System.Drawing.SystemColors.Highlight;
             this.processStatusLb.Location = new System.Drawing.Point(351, 222);
             this.processStatusLb.Name = "processStatusLb";
             this.processStatusLb.Size = new System.Drawing.Size(37, 13);
@@ -102,17 +103,18 @@
             // 
             // cleanProcessBtn
             // 
-            this.cleanProcessBtn.Location = new System.Drawing.Point(713, 24);
+            this.cleanProcessBtn.Location = new System.Drawing.Point(661, 24);
             this.cleanProcessBtn.Name = "cleanProcessBtn";
-            this.cleanProcessBtn.Size = new System.Drawing.Size(75, 23);
+            this.cleanProcessBtn.Size = new System.Drawing.Size(127, 23);
             this.cleanProcessBtn.TabIndex = 6;
-            this.cleanProcessBtn.Text = "Clean Process";
+            this.cleanProcessBtn.Text = "Close All Excel Process";
             this.cleanProcessBtn.UseVisualStyleBackColor = true;
             this.cleanProcessBtn.Click += new System.EventHandler(this.cleanProcessBtn_Click);
             // 
             // appendStatusLb
             // 
             this.appendStatusLb.AutoSize = true;
+            this.appendStatusLb.ForeColor = System.Drawing.SystemColors.Highlight;
             this.appendStatusLb.Location = new System.Drawing.Point(351, 264);
             this.appendStatusLb.MaximumSize = new System.Drawing.Size(387, 0);
             this.appendStatusLb.Name = "appendStatusLb";

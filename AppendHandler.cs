@@ -50,7 +50,7 @@ namespace Append_Excel
         {
             private set
             {
-                if(value != mMessage)
+                if(value == "" || value != mMessage)
                 {
                     mMessage = value;
                     OnShowMessage();
@@ -138,7 +138,7 @@ namespace Append_Excel
             DateTime start = DateTime.Now;
             while (IsProcessing && PercentageProcess >= 0 && PercentageProcess < 100)
             {
-                await Task.Delay(10);
+                await Task.Delay(50);
 
                 TimeSpan elapsed = DateTime.Now - start;
 
@@ -271,7 +271,8 @@ namespace Append_Excel
 
         private async Task<bool> OpenCSVFiles(string csvFiles, Workbook wbHandle)
         {
-            Worksheet worksheet = wbHandle.Worksheets.Add();
+            Workbook wb = mExcel.Workbooks.Add();
+            Worksheet worksheet = wb.Worksheets[1];
 
             try
             {
@@ -296,16 +297,38 @@ namespace Append_Excel
                 queryTable.TextFileConsecutiveDelimiter = false;
                 queryTable.TextFileTabDelimiter = true;
                 queryTable.TextFileSemicolonDelimiter = false;
-                queryTable.TextFileCommaDelimiter = false;
+                queryTable.TextFileCommaDelimiter = true;
                 queryTable.TextFileSpaceDelimiter = false;
-                queryTable.TextFileColumnDataTypes = new object[] { Type.Missing };
+                queryTable.TextFileColumnDataTypes = new object[] { XlColumnDataType.xlTextFormat };
                 queryTable.TextFileTrailingMinusNumbers = true;
                 queryTable.Refresh(false);
-            }catch(Exception ex)
+
+
+                //PrintData(worksheet);
+                if (wbHandle.Worksheets[1].Name != "Result_Sheet")
+                {
+                    Copy(worksheet, wbHandle.Worksheets[1]);
+                    wbHandle.Worksheets[1].Name = "Result_Sheet";
+                }
+                else
+                {
+                    // Add a new sheet to the destination workbook
+                    Worksheet destinationSheet = wbHandle.Worksheets.Add(After: wbHandle.Worksheets[1]);
+
+                    // Set the destination sheet name to match the source sheet name
+                    destinationSheet.Name = worksheet.Name + wbHandle.Worksheets.Count;
+
+                    // Copy the entire source sheet to the destination sheet
+                    Copy(worksheet, destinationSheet);
+                }
+            }
+            catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                wb.Close(false);
                 return false;
             }
+            wb.Close(false);
 
             return true;
         }
