@@ -181,10 +181,6 @@ namespace Append_Excel
             {
                 try
                 {
-                    foreach(Worksheet ws in wbHandle.Worksheets)
-                    {
-                        Console.WriteLine("WbHandle ws name : "+ws.Name);
-                    }
                     //PrintData(worksheet);
                     if (wbHandle.Worksheets[1].Name != "Result_Sheet")
                     {
@@ -233,7 +229,7 @@ namespace Append_Excel
             //    }
             //}
 
-            sourceRange.Copy(destinationSheet.Cells[sourceRange.Rows.Count + 1, 1]);
+            sourceRange.Copy(destinationSheet.Cells[1, 1]);
 
         }
 
@@ -303,6 +299,11 @@ namespace Append_Excel
 
         private async Task<bool> Appending(Workbook wbHandle)
         {
+            //foreach(Worksheet ws in wbHandle.Worksheets)
+            //{
+            //    PrintData(ws);
+            //}
+
             int workSheetCount = wbHandle.Worksheets.Count; 
             if(workSheetCount == 0)
             {
@@ -374,6 +375,10 @@ namespace Append_Excel
             if(File.Exists(filePath))
             {
                 File.Delete(filePath);
+            }
+            foreach (Worksheet ws in wbHandle.Worksheets)
+            {
+                PrintData(ws);
             }
 
             Copy(wbHandle.Worksheets[1], wbResult.Worksheets[1]);

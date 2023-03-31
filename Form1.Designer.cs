@@ -113,11 +113,11 @@
             // appendStatusLb
             // 
             this.appendStatusLb.AutoSize = true;
-            this.appendStatusLb.ForeColor = System.Drawing.SystemColors.Highlight;
             this.appendStatusLb.Location = new System.Drawing.Point(351, 264);
+            this.appendStatusLb.MaximumSize = new System.Drawing.Size(387, 0);
             this.appendStatusLb.Name = "appendStatusLb";
             this.appendStatusLb.Size = new System.Drawing.Size(0, 13);
-            this.appendStatusLb.TabIndex = 7;
+            this.appendStatusLb.TabIndex = 8;
             // 
             // Form1
             // 
