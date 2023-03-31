@@ -34,10 +34,7 @@ namespace Append_Excel
         {
             this.Invoke((MethodInvoker)delegate
             {
-                if (mHandler.Message != "")
-                {
-                    appendStatusLb.Text = mHandler.Message;
-                }
+                appendStatusLb.Text = mHandler.Message;
             });
         }
 
@@ -53,7 +50,7 @@ namespace Append_Excel
                     {
                         progressBar1.Value = mHandler.PercentageProcess;
                     }
-                    processStatusLb.Text = ConvertExecuted(mHandler.ExceutedTime)+"/"+ConvertEstimate(mHandler.ExceutedTime);
+                    processStatusLb.Text = ConvertExecuted(mHandler.ExecutedTime)+" / "+ConvertEstimate(mHandler.EstimatedTime);
                 });
 
             }
@@ -83,10 +80,29 @@ namespace Append_Excel
         public static string ConvertEstimate(long milliseconds) 
         {
             TimeSpan time = TimeSpan.FromMilliseconds(milliseconds);
-            return string.Format("{0:D2}:{1:D2}:{2:D2}s",
-                (int)time.TotalHours,
-                time.Minutes,
-                time.Seconds);
+            //return string.Format("{0:D2}h{1:D2}m{2:D2}s",
+            //    (int)time.TotalHours,
+            //    time.Minutes,
+            //    time.Seconds);
+            if(time.Hours > 0)
+            {
+                return string.Format("~ {0:D2}h{1:D2}m",
+                    (int)time.TotalHours,
+                    time.Minutes);
+            }else if(time.Minutes > 0)
+            {
+                return string.Format("~ {0:D2}m{1:D2}s",
+                    (int)time.TotalMinutes,
+                    time.Seconds);
+            }else if(time.TotalSeconds > 2)
+            {
+                return string.Format("~ {0:D2}s",
+                    (int)time.TotalSeconds+1);
+            }else
+            {
+                return string.Format("< {0:D2}s",
+                   (int)time.TotalSeconds + 1);
+            }
         }
 
         private void openFileBtn_Click(object sender, EventArgs e)
@@ -130,7 +146,9 @@ namespace Append_Excel
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = saveDialog.FileName;
-               _ = mHandler.StartProcessing(mSelectedFile,fileName);
+
+                _ = Task.Run(async () => { await mHandler.TimeEstimateHandler(); });
+                _ = mHandler.StartProcessing(mSelectedFile,fileName);
             }
         }
 

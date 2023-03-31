@@ -33,10 +33,13 @@ namespace Append_Excel
         public int PercentageProcess { 
             private set
             {
-                if(value != mPercentageProcess)
+                lock(mLocker)
                 {
-                    mPercentageProcess = value;
-                    OnStatusChanged();
+                    if (value != mPercentageProcess)
+                    {
+                        mPercentageProcess = value;
+                        OnStatusChanged();
+                    }
                 }
             }
             get { return mPercentageProcess; } 
@@ -56,7 +59,7 @@ namespace Append_Excel
             get { return mMessage; }
         }
 
-        public int ExceutedTime
+        public int ExecutedTime
         {
             private set
             {
@@ -72,9 +75,13 @@ namespace Append_Excel
         public int EstimatedTime { 
             private set
             {
-                if( value != mEstimateTime)
+                if(value < 1000)
                 {
-                    mEstimateTime = value;
+                    mEstimateTime = 1000;
+                    OnStatusChanged();
+                }else if(value != mEstimateTime)
+                {
+                    mEstimateTime = value; 
                     OnStatusChanged();
                 }
             }
@@ -90,8 +97,6 @@ namespace Append_Excel
                 Message = "Has no file selected";
                 return;
             }
-            PercentageProcess = 0;
-            TimeEstimateHandler();
             IsProcessing = true;
             //handling
             try
@@ -107,12 +112,14 @@ namespace Append_Excel
                     wbResult.Close(true);
                     wbHandle.Close(false);
                     mExcel.Quit();
+                    IsProcessing = false;
                     return;
                 }
                 wbResult.Close(false);
                 wbHandle.Close(false);
                 mExcel.Quit();
-            }catch(Exception ex)
+            }
+            catch(Exception ex)
             {
                 Message=ex.Message;
                 IsProcessing = false;
@@ -124,23 +131,29 @@ namespace Append_Excel
 
         public async Task TimeEstimateHandler()
         {
+            PercentageProcess = 0;
+            Message = "";
+            ExecutedTime = 0;
+            EstimatedTime = 0;
             DateTime start = DateTime.Now;
             while (IsProcessing && PercentageProcess >= 0 && PercentageProcess < 100)
             {
-                Console.WriteLine(PercentageProcess);
                 await Task.Delay(10);
 
                 TimeSpan elapsed = DateTime.Now - start;
 
-                ExceutedTime = (int)elapsed.TotalMilliseconds;
-                EstimatedTime = ExceutedTime * 100 / PercentageProcess;
+                EstimatedTime = (int)((elapsed.TotalMilliseconds * 100) / PercentageProcess);
+                ExecutedTime = (int)elapsed.TotalMilliseconds;
+                
+                Console.WriteLine("percentage " + PercentageProcess + " executed " + ExecutedTime + " estimate " + EstimatedTime);
             }
+            EstimatedTime = ExecutedTime;
             PercentageProcess = 0;
         }
 
         private async Task<bool> OpenDataFiles(List<string> selectedFiles, Workbook wbHandle)
         {
-            int deltaPercentage = 30/selectedFiles.Count;
+            int deltaPercentage = 60/selectedFiles.Count;
             foreach (string file in selectedFiles)
             {
                 var fileExt = System.IO.Path.GetExtension(file);
@@ -309,7 +322,7 @@ namespace Append_Excel
             {
                 return false;
             }
-            int deltaPercentage = 50/ workSheetCount;
+            int perLoop = (int)(30 / Math.Log(workSheetCount,2));
             List<int> indexList = new List<int>();
             for (int i=0;i<workSheetCount; i++)
             {
@@ -318,23 +331,26 @@ namespace Append_Excel
             List<int> mergedIndex = new List<int>();
             while(indexList.Count > 1)
             {
+                int perSubLoop = perLoop / (indexList.Count / 2);
                 for(int i = 0; i < indexList.Count-1; i += 2)
                 {
-                    if(! await Merged(wbHandle, indexList[i], indexList[i + 1]))
+                    PercentageProcess += perSubLoop;
+                    if (! await Merged(wbHandle, indexList[i], indexList[i + 1]))
                     {
                         return false;
                     }
-                    mergedIndex.Add(i+1);
+                    mergedIndex.Add(indexList[i+1]); //save value to delete
                     if(i+3 >= indexList.Count)
                     {
                         foreach(int removedIdx in mergedIndex)
                         {
-                            indexList.RemoveAt(removedIdx);
+                            indexList.Remove(removedIdx);
                         }
                         mergedIndex.Clear();
                         break;
                     }
                 }
+                
             }
 
             if(indexList.Count == 1) {
@@ -375,6 +391,7 @@ namespace Append_Excel
 
         private async Task<bool> SaveFile(Workbook wbResult,Workbook wbHandle, string filePath)
         {
+            PercentageProcess = 90;
             if(File.Exists(filePath))
             {
                 File.Delete(filePath);
@@ -389,6 +406,7 @@ namespace Append_Excel
             //wbResult.Save();
             // Save the workbook
             wbResult.SaveAs(filePath);
+            PercentageProcess = 100;
 
             return true;
         }
