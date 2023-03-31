@@ -181,16 +181,26 @@ namespace Append_Excel
             {
                 try
                 {
-                    
+                    foreach(Worksheet ws in wbHandle.Worksheets)
+                    {
+                        Console.WriteLine("WbHandle ws name : "+ws.Name);
+                    }
                     //PrintData(worksheet);
-                    // Add a new sheet to the destination workbook
-                    Worksheet destinationSheet = wbHandle.Worksheets.Add();
+                    if (wbHandle.Worksheets[1].Name != "Result_Sheet")
+                    {
+                        Copy(worksheet, wbHandle.Worksheets[1]);
+                        wbHandle.Worksheets[1].Name = "Result_Sheet";
+                    }else
+                    {
+                        // Add a new sheet to the destination workbook
+                        Worksheet destinationSheet = wbHandle.Worksheets.Add(After: wbHandle.Worksheets[1]);
 
-                    // Set the destination sheet name to match the source sheet name
-                    destinationSheet.Name = worksheet.Name+wbHandle.Worksheets.Count;
+                        // Set the destination sheet name to match the source sheet name
+                        destinationSheet.Name = worksheet.Name + wbHandle.Worksheets.Count;
 
-                    // Copy the entire source sheet to the destination sheet
-                    Copy(worksheet, destinationSheet);
+                        // Copy the entire source sheet to the destination sheet
+                        Copy(worksheet, destinationSheet);
+                    }
                 }
                 catch(Exception ex)
                 {
@@ -208,20 +218,22 @@ namespace Append_Excel
             // Get the range of cells in the source worksheet
             Range sourceRange = sourceSheet.UsedRange;
 
-            // Loop through each cell in the source range and copy its value and formatting to the destination worksheet
-            for (int row = 1; row <= sourceRange.Rows.Count; row++)
-            {
-                for (int column = 1; column <= sourceRange.Columns.Count; column++)
-                {
-                    // Get the cell in the source range and the corresponding cell in the destination worksheet
-                    Range sourceCell = sourceRange.Cells[row, column];
-                    Range destinationCell = destinationSheet.Cells[row, column];
+            //// Loop through each cell in the source range and copy its value and formatting to the destination worksheet
+            //for (int row = 1; row <= sourceRange.Rows.Count; row++)
+            //{
+            //    for (int column = 1; column <= sourceRange.Columns.Count; column++)
+            //    {
+            //        // Get the cell in the source range and the corresponding cell in the destination worksheet
+            //        Range sourceCell = sourceRange.Cells[row, column];
+            //        Range destinationCell = destinationSheet.Cells[row, column];
 
-                    // Copy the value and formatting from the source cell to the destination cell
-                    destinationCell.Value = sourceCell.Value;
-                    sourceCell.Copy(destinationCell);
-                }
-            }
+            //        // Copy the value and formatting from the source cell to the destination cell
+            //        destinationCell.Value = sourceCell.Value;
+            //        sourceCell.Copy(destinationCell);
+            //    }
+            //}
+
+            sourceRange.Copy(destinationSheet.Cells[sourceRange.Rows.Count + 1, 1]);
 
         }
 
@@ -364,10 +376,9 @@ namespace Append_Excel
                 File.Delete(filePath);
             }
 
-            Worksheet worksheet = wbResult.Worksheets.Add();
+            Copy(wbHandle.Worksheets[1], wbResult.Worksheets[1]);
 
-            wbHandle.Worksheets[1].Copy(worksheet);
-            wbResult.Save();
+            //wbResult.Save();
             // Save the workbook
             wbResult.SaveAs(filePath);
 
