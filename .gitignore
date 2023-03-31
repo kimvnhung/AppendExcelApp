@@ -1,0 +1,36 @@
+# Ignore build output
+bin/
+obj/
+
+# Ignore user-specific settings
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore Visual Studio files
+.vs/
+*.vshost.exe
+*.vshost32.exe
+*.pdb
+*.log
+
+# Ignore NuGet packages
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+npm-debug.log
+*.npmrc
+
+# Ignore build artifacts
+*.swp
+*~
+*.bak
+*.tmp
+*.cache
+*.DS_Store
+Thumbs.db
+
+# Ignore Windows Forms Designer generated code
+*.Designer.cs

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -26,6 +27,18 @@ namespace Append_Excel
 
             mHandler = new AppendHandler();
             mHandler.StatusChanged += MHandler_StatusChanged;
+            mHandler.ShowMessage += MHandler_ShowMessage;
+        }
+
+        private void MHandler_ShowMessage(object sender, string e)
+        {
+            this.Invoke((MethodInvoker)delegate
+            {
+                if (mHandler.Message != "")
+                {
+                    appendStatusLb.Text = mHandler.Message;
+                }
+            });
         }
 
         private void MHandler_StatusChanged(object sender, EventArgs e)
@@ -40,7 +53,7 @@ namespace Append_Excel
                     {
                         progressBar1.Value = mHandler.PercentageProcess;
                     }
-                    processStatusLb.Text = MillisecondsToTimeString(mHandler.ExceutedTime)+"/"+MillisecondsToTimeString(mHandler.ExceutedTime);
+                    processStatusLb.Text = ConvertExecuted(mHandler.ExceutedTime)+"/"+ConvertEstimate(mHandler.ExceutedTime);
                 });
 
             }
@@ -51,15 +64,26 @@ namespace Append_Excel
                     appendBtn.Text = "Append";
                     openFileBtn.Enabled = true;
                     progressBar1.Value = 0;
-
                 });
             }
         }
 
-        public static string MillisecondsToTimeString(long milliseconds)
+
+
+        public static string ConvertExecuted(long milliseconds)
         {
             TimeSpan time = TimeSpan.FromMilliseconds(milliseconds);
-            return string.Format("{0:D2}h{1:D2}m{2:D2}s",
+            return string.Format("{0:D2}:{1:D2}:{2:D2}:{3:D2}ms",
+                (int)time.TotalHours,
+                time.Minutes,
+                time.Seconds,
+                time.Milliseconds);
+        }
+
+        public static string ConvertEstimate(long milliseconds) 
+        {
+            TimeSpan time = TimeSpan.FromMilliseconds(milliseconds);
+            return string.Format("{0:D2}:{1:D2}:{2:D2}s",
                 (int)time.TotalHours,
                 time.Minutes,
                 time.Seconds);
@@ -106,8 +130,45 @@ namespace Append_Excel
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = saveDialog.FileName;
-                _ = mHandler.StartProcessing(mSelectedFile);
+               _ = mHandler.StartProcessing(mSelectedFile,fileName);
             }
+        }
+
+        private void cleanProcessBtn_Click(object sender, EventArgs e)
+        {
+            //// Get all running instances of Excel
+            //Process[] processes = Process.GetProcessesByName("Excel");
+
+            //// Close each instance of Excel
+            //foreach (Process process in processes)
+            //{
+            //    // Try to close the Excel process gracefully
+            //    try
+            //    {
+            //        // Get the Excel Application object
+            //        Microsoft.Office.Interop.Excel.Application excelApp = (Microsoft.Office.Interop.Excel.Application)System.Runtime.InteropServices.Marshal.GetActiveObject("Excel.Application");
+
+            //        // Close all open workbooks
+            //        excelApp.Workbooks.Close();
+
+            //        // Quit the Excel Application object
+            //        excelApp.Quit();
+            //    }
+            //    catch
+            //    {
+            //        // Ignore any exceptions and kill the process forcibly
+            //    }
+
+            //    // Kill the Excel process forcibly
+            //    process.Kill();
+            //}
+            // Start a new process to run the taskkill command
+            Process process = new Process();
+            process.StartInfo.FileName = "taskkill";
+            process.StartInfo.Arguments = "/f /im excel.exe";
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.Start();
+            process.WaitForExit();
         }
     }
 }

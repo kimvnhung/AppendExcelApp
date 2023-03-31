@@ -35,6 +35,8 @@
             this.appendBtn = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.processStatusLb = new System.Windows.Forms.Label();
+            this.cleanProcessBtn = new System.Windows.Forms.Button();
+            this.appendStatusLb = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -92,17 +94,38 @@
             // processStatusLb
             // 
             this.processStatusLb.AutoSize = true;
-            this.processStatusLb.Location = new System.Drawing.Point(704, 222);
+            this.processStatusLb.Location = new System.Drawing.Point(351, 222);
             this.processStatusLb.Name = "processStatusLb";
             this.processStatusLb.Size = new System.Drawing.Size(37, 13);
             this.processStatusLb.TabIndex = 5;
             this.processStatusLb.Text = "Status";
+            // 
+            // cleanProcessBtn
+            // 
+            this.cleanProcessBtn.Location = new System.Drawing.Point(713, 24);
+            this.cleanProcessBtn.Name = "cleanProcessBtn";
+            this.cleanProcessBtn.Size = new System.Drawing.Size(75, 23);
+            this.cleanProcessBtn.TabIndex = 6;
+            this.cleanProcessBtn.Text = "Clean Process";
+            this.cleanProcessBtn.UseVisualStyleBackColor = true;
+            this.cleanProcessBtn.Click += new System.EventHandler(this.cleanProcessBtn_Click);
+            // 
+            // appendStatusLb
+            // 
+            this.appendStatusLb.AutoSize = true;
+            this.appendStatusLb.ForeColor = System.Drawing.SystemColors.Highlight;
+            this.appendStatusLb.Location = new System.Drawing.Point(351, 264);
+            this.appendStatusLb.Name = "appendStatusLb";
+            this.appendStatusLb.Size = new System.Drawing.Size(0, 13);
+            this.appendStatusLb.TabIndex = 7;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.appendStatusLb);
+            this.Controls.Add(this.cleanProcessBtn);
             this.Controls.Add(this.processStatusLb);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.appendBtn);
@@ -125,6 +148,8 @@
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Label processStatusLb;
         private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.Button cleanProcessBtn;
+        private System.Windows.Forms.Label appendStatusLb;
     }
 }
 
