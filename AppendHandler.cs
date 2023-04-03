@@ -26,6 +26,7 @@ namespace Append_Excel
         private int mPercentageProcess = 0;
         private int mExecutedTime = 0;
         private int mEstimateTime = 0;
+        private DateTime mStartTime = DateTime.MinValue;
 
 
         private Application mExcel = null;
@@ -49,9 +50,10 @@ namespace Append_Excel
                     {
                         mPercentageProcess = value;
                         OnStatusChanged();
+                        TimeEstimating();
                     }
                 }
-            }
+            } 
             get { return mPercentageProcess; } 
         }
 
@@ -107,11 +109,14 @@ namespace Append_Excel
                 Message = "Has no file selected";
                 return;
             }
+
             mIsFailedBecauseOfTooLong = false;
             IsProcessing = true;
             //handling
+            mStartTime = DateTime.Now;
             try
             {
+                //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                 mExcel = new Application();
                 var ext = System.IO.Path.GetExtension(savePath);
                 if (ext == ".csv")
@@ -119,8 +124,27 @@ namespace Append_Excel
                     List<List<object>> totalData = new List<List<object>>();
                     List<object> header = new List<object>();
                     List<string> templateFiles = new List<string>();
-                    foreach(string filePath in selectedFiles)
+                    int xlsxCount = 0, csvCount = 0;
+                    foreach (string filePath in selectedFiles)
                     {
+                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
+                        var fileExt = Path.GetExtension(filePath);
+                        if (fileExt == ".xlsx" || fileExt == ".xls")
+                        {
+                            xlsxCount++;
+                        }
+                        else if (fileExt == ".csv")
+                        {
+                            csvCount++;
+                        }
+                    }
+
+                    int openXlsxDelta = (int)(50 * 0.75 / xlsxCount);
+                    int csvDelta = (75-openXlsxDelta*xlsxCount)/selectedFiles.Count;
+
+                    foreach (string filePath in selectedFiles)
+                    {
+                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                         var fileExt = Path.GetExtension(filePath); 
                         if (fileExt == ".xlsx" || fileExt == ".xls")
                         {
@@ -129,6 +153,7 @@ namespace Append_Excel
                             {
                                 templateFiles.AddRange(result);
                             }
+                            PercentageProcess += openXlsxDelta;
                         }else if (fileExt == ".csv")
                         {
                             var result = await OpenCSV(filePath);
@@ -140,11 +165,13 @@ namespace Append_Excel
                                 }
                                 totalData.AddRange(result.GetRange(1, result.Count - 1));
                             }
+                            PercentageProcess += csvDelta;
                         }
                     }
 
                     foreach(string filePath in templateFiles)
                     {
+                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                         var fileExt = Path.GetExtension(filePath);
                         if (fileExt == ".csv")
                         {
@@ -161,30 +188,42 @@ namespace Append_Excel
                             {
                                 File.Delete(filePath);
                             }
+                            PercentageProcess += csvDelta;
                         }
                     }
 
                     if(totalData.Count > 0)
                     {
+                        PercentageProcess = 75;
+                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                         await SaveCsv(totalData,header, savePath);
                         Message = "Saved file to " + savePath;
                         IsProcessing = false;
                         mExcel.Quit();
+                        PercentageProcess = 100;
+                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
+                        TimeEstimating();
                         return;
                     }
                 }else
                 {
+                    //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                     Workbook wbResult = mExcel.Workbooks.Add();
                     Workbook wbHandle = mExcel.Workbooks.Add();
+                    //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                     await OpenDataFiles(selectedFiles, wbHandle,sheetName);
+                    //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                     if (await Appending(wbHandle))
                     {
+                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                         await SaveFile(wbResult, wbHandle, savePath);
                         Message = "Saved file to " + savePath;
                         wbResult.Close(true);
                         wbHandle.Close(false);
                         mExcel.Quit();
                         IsProcessing = false;
+                        TimeEstimating() ;
+                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                         return;
                     }
                     wbResult.Close(false);
@@ -309,26 +348,24 @@ namespace Append_Excel
             return true;
         }
 
-        public async Task TimeEstimateHandler()
+        public void TimeEstimating()
         {
-            PercentageProcess = 0;
-            Message = "";
-            ExecutedTime = 0;
-            EstimatedTime = 0;
-            DateTime start = DateTime.Now;
-            while (IsProcessing && PercentageProcess >= 0 && PercentageProcess < 100)
+            if (IsProcessing && PercentageProcess >= 0 && PercentageProcess < 100)
             {
-                await Task.Delay(50);
 
-                TimeSpan elapsed = DateTime.Now - start;
+                TimeSpan elapsed = DateTime.Now - mStartTime;
 
-                EstimatedTime = (int)((elapsed.TotalMilliseconds * 100) / PercentageProcess);
+                if(PercentageProcess != 0)
+                {
+                    EstimatedTime = (int)((elapsed.TotalMilliseconds * 100) / PercentageProcess);
+                }
                 ExecutedTime = (int)elapsed.TotalMilliseconds;
                 
                 Console.WriteLine("percentage " + PercentageProcess + " executed " + ExecutedTime + " estimate " + EstimatedTime);
+            }else
+            {
+                EstimatedTime = ExecutedTime;
             }
-            EstimatedTime = ExecutedTime;
-            PercentageProcess = 0;
         }
 
         private async Task<bool> OpenDataFiles(List<string> selectedFiles, Workbook wbHandle, string sheetName)
@@ -514,7 +551,7 @@ namespace Append_Excel
             {
                 return false;
             }
-            int perLoop = (int)(30 / Math.Log(workSheetCount,2));
+            int perLoop = (int)(5 / Math.Log(workSheetCount,2));
             List<int> indexList = new List<int>();
             for (int i=0;i<workSheetCount; i++)
             {
@@ -591,7 +628,7 @@ namespace Append_Excel
 
         private async Task<bool> SaveFile(Workbook wbResult,Workbook wbHandle, string filePath)
         {
-            PercentageProcess = 90;
+            PercentageProcess = 65;
             if(File.Exists(filePath))
             {
                 File.Delete(filePath);
@@ -600,9 +637,9 @@ namespace Append_Excel
             //{
             //    PrintData(ws);
             //}
-
+            PercentageProcess = 70;
             Copy(wbHandle.Worksheets[1], wbResult.Worksheets[1]);
-
+            PercentageProcess = 80;
             //wbResult.Save();
             // Save the workbook
             wbResult.SaveAs(filePath);

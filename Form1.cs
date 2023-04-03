@@ -97,11 +97,11 @@ namespace Append_Excel
             }else if(time.TotalSeconds > 2)
             {
                 return string.Format("~ {0:D2}s",
-                    (int)time.TotalSeconds+1);
+                    (int)time.Seconds+1);
             }else
             {
                 return string.Format("< {0:D2}s",
-                   (int)time.TotalSeconds + 1);
+                   (int)time.Seconds + 1);
             }
         }
 
@@ -146,9 +146,7 @@ namespace Append_Excel
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = saveDialog.FileName;
-
-                _ = Task.Run(async () => { await mHandler.TimeEstimateHandler(); });
-                _ = mHandler.StartProcessing(mSelectedFile,fileName,sheetNameEdt.Text);
+                mHandler.StartProcessing(mSelectedFile, fileName, sheetNameEdt.Text);
             }
         }
 
