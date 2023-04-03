@@ -1,8 +1,12 @@
-﻿using Microsoft.Office.Interop.Excel;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,10 +18,13 @@ namespace Append_Excel
         public event EventHandler<string> ShowMessage;
         private static object mLocker = new object();
 
+        private bool mIsFailedBecauseOfTooLong = false;
         private bool mIsProcessing = false;
         private int mPercentageProcess = 0;
         private int mExecutedTime = 0;
         private int mEstimateTime = 0;
+
+
         private Application mExcel = null;
 
         public bool IsProcessing { 
@@ -90,7 +97,7 @@ namespace Append_Excel
         public AppendHandler() { }
 
 
-        public async Task StartProcessing(List<string> selectedFiles,string savePath)
+        public async Task StartProcessing(List<string> selectedFiles,string savePath, string sheetName)
         {
             if(selectedFiles.Count == 0)
             {
@@ -101,23 +108,66 @@ namespace Append_Excel
             //handling
             try
             {
-                mExcel = new Application();
-                Workbook wbResult = mExcel.Workbooks.Add();
-                Workbook wbHandle = mExcel.Workbooks.Add();
-                await OpenDataFiles(selectedFiles, wbHandle);
-                if (await Appending(wbHandle))
+                var ext = System.IO.Path.GetExtension(savePath);
+               if (ext == ".csv")
                 {
-                    await SaveFile(wbResult, wbHandle, savePath);
-                    Message = "Saved file to " + savePath;
-                    wbResult.Close(true);
+                    List<List<object>> totalData = new List<List<object>>();
+                    List<object> header = new List<object>();
+                    foreach(string filePath in selectedFiles)
+                    {
+                        var fileExt = Path.GetExtension(filePath); 
+                        if (fileExt == ".xlsx" || fileExt == ".xls")
+                        {
+                            var result = await OpenXLSX(filePath, sheetName);
+                            if(result != null && result.Count > 0)
+                            {
+                                if(header.Count == 0)
+                                {
+                                    header = result[0];
+                                }
+                                totalData.AddRange(result.GetRange(1,result.Count-1));
+                            }
+                        }else if (fileExt == ".csv")
+                        {
+                            var result = await OpenCSV(filePath);
+                            if (result != null && result.Count > 0)
+                            {
+                                if (header.Count == 0)
+                                {
+                                    header = result[0];
+                                }
+                                totalData.AddRange(result.GetRange(1, result.Count - 1));
+                            }
+                        }
+                    }
+
+                    if(totalData.Count > 0)
+                    {
+                        await SaveCsv(totalData, savePath);
+                        Message = "Saved file to " + savePath;
+                        IsProcessing = false;
+                        return;
+                    }
+                }else
+                {
+                    mExcel = new Application();
+                    Workbook wbResult = mExcel.Workbooks.Add();
+                    Workbook wbHandle = mExcel.Workbooks.Add();
+                    await OpenDataFiles(selectedFiles, wbHandle);
+                    if (await Appending(wbHandle))
+                    {
+                        await SaveFile(wbResult, wbHandle, savePath);
+                        Message = "Saved file to " + savePath;
+                        wbResult.Close(true);
+                        wbHandle.Close(false);
+                        mExcel.Quit();
+                        IsProcessing = false;
+                        return;
+                    }
+                    wbResult.Close(false);
                     wbHandle.Close(false);
                     mExcel.Quit();
-                    IsProcessing = false;
-                    return;
                 }
-                wbResult.Close(false);
-                wbHandle.Close(false);
-                mExcel.Quit();
             }
             catch(Exception ex)
             {
@@ -126,7 +176,87 @@ namespace Append_Excel
                 return;
             }
             IsProcessing = false;
-            Message = "Append Failed!";
+            Message = "Append Failed"+(mIsFailedBecauseOfTooLong?". Please try save file as csv!":"");
+        }
+
+        private async Task<List<List<object>>> OpenXLSX(string filePath,string sheetName)
+        {
+            // Loop through the rows and columns and put the data into a List<List<object>>
+            List<List<object>> data = new List<List<object>>();
+            Workbook workbook = mExcel.Workbooks.Open(filePath);
+            Console.WriteLine(filePath + " WorkSheet Count : " + workbook.Worksheets.Count);
+            foreach (Worksheet worksheet in workbook.Worksheets)
+            {
+                try
+                {
+                    if(worksheet.Name == sheetName)
+                    {
+                        // Get the range of cells with data
+                        Range range = worksheet.UsedRange;
+
+                        
+                        for (int row = 1; row <= range.Rows.Count; row++)
+                        {
+                            List<object> rowData = new List<object>();
+                            for (int col = 1; col <= range.Columns.Count; col++)
+                            {
+                                Range cell = range.Cells[row, col];
+                                object value = cell.Value;
+                                rowData.Add(value);
+                            }
+                            data.Add(rowData);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    workbook.Close(false);
+                    return new List<List<object>>();
+                }
+            }
+            workbook.Close(false);
+            return data;
+        }
+
+        private async Task<List<List<object>>> OpenCSV(string filePath)
+        {
+            List<List<object>> data = new List<List<object>>();
+
+            // Create the CSV configuration object
+            var csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+                Delimiter = ",",
+                IgnoreBlankLines = true,
+                TrimOptions = TrimOptions.Trim
+            };
+
+            // Read the header row of the first CSV file
+            using (var reader = new StreamReader(filePath))
+            using (var csvReader = new CsvReader(reader, csvConfiguration))
+            {
+                csvReader.Read();
+                csvReader.ReadHeader();
+
+                var columnNames = csvReader.HeaderRecord;
+                while (csvReader.Read())
+                {
+                    List<object> rowData = new List<object>();
+                    foreach (var columnName in columnNames)
+                    {
+                        var value = csvReader.GetField(columnName);
+                        rowData.Add(value);
+                    }
+                    data.Add(rowData);  
+                }
+            }
+            return data;
+        }
+
+        private async Task<bool> SaveCsv(List<List<object>> data, string savePath)
+        {
+            return true;
         }
 
         public async Task TimeEstimateHandler()
@@ -226,21 +356,6 @@ namespace Append_Excel
         {
             // Get the range of cells in the source worksheet
             Range sourceRange = sourceSheet.UsedRange;
-
-            //// Loop through each cell in the source range and copy its value and formatting to the destination worksheet
-            //for (int row = 1; row <= sourceRange.Rows.Count; row++)
-            //{
-            //    for (int column = 1; column <= sourceRange.Columns.Count; column++)
-            //    {
-            //        // Get the cell in the source range and the corresponding cell in the destination worksheet
-            //        Range sourceCell = sourceRange.Cells[row, column];
-            //        Range destinationCell = destinationSheet.Cells[row, column];
-
-            //        // Copy the value and formatting from the source cell to the destination cell
-            //        destinationCell.Value = sourceCell.Value;
-            //        sourceCell.Copy(destinationCell);
-            //    }
-            //}
 
             sourceRange.Copy(destinationSheet.Cells[1, 1]);
 
@@ -389,6 +504,10 @@ namespace Append_Excel
             {
                 Worksheet worksheet1 = wbHandle.Worksheets[sheet1Index];
                 Worksheet worksheet2 = wbHandle.Worksheets[sheet2Index];
+
+                Console.WriteLine("Merged "+worksheet2.Name+" to "+worksheet2.Name + " with index "+sheet1Index+" and "+sheet2Index);
+                Console.WriteLine("worksheet1 row : "+worksheet1.UsedRange.Rows.Count + " column "+worksheet1.UsedRange.Columns.Count);
+                Console.WriteLine("worksheet2 row : " + worksheet2.UsedRange.Rows.Count + " column " + worksheet2.UsedRange.Columns.Count);
 
                 // Get the last used row in worksheet1
                 int lastUsedRow = worksheet1.Cells.Find("*", System.Reflection.Missing.Value,

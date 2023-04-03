@@ -9,3 +9,20 @@ E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.csproj.GenerateResour
 E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.csproj.CoreCompileInputs.cache
 E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.exe
 E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.pdb
+E:\Freelancer\firstjob\Append Excel\bin\Debug\CsvHelper.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\Microsoft.Bcl.HashCode.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Buffers.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Memory.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Numerics.Vectors.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Threading.Tasks.Extensions.dll
+E:\Freelancer\firstjob\Append Excel\bin\Debug\CsvHelper.xml
+E:\Freelancer\firstjob\Append Excel\bin\Debug\Microsoft.Bcl.AsyncInterfaces.xml
+E:\Freelancer\firstjob\Append Excel\bin\Debug\Microsoft.Bcl.HashCode.xml
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Buffers.xml
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Memory.xml
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Numerics.Vectors.xml
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+E:\Freelancer\firstjob\Append Excel\bin\Debug\System.Threading.Tasks.Extensions.xml
+E:\Freelancer\firstjob\Append Excel\obj\Debug\Append Excel.csproj.CopyComplete

@@ -148,7 +148,7 @@ namespace Append_Excel
                 string fileName = saveDialog.FileName;
 
                 _ = Task.Run(async () => { await mHandler.TimeEstimateHandler(); });
-                _ = mHandler.StartProcessing(mSelectedFile,fileName);
+                _ = mHandler.StartProcessing(mSelectedFile,fileName,sheetNameEdt.Text);
             }
         }
 
