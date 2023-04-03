@@ -146,7 +146,7 @@ namespace Append_Excel
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = saveDialog.FileName;
-                mHandler.StartProcessing(mSelectedFile, fileName, sheetNameEdt.Text);
+                mHandler.StartProcessing(mSelectedFile, fileName, checkBox1.Checked? sheetNameEdt.Text:"");
             }
         }
 
@@ -185,6 +185,17 @@ namespace Append_Excel
             process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.Start();
             process.WaitForExit();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked)
+            {
+                sheetNameEdt.Enabled = true;
+            }else
+            {
+                sheetNameEdt.Enabled=false;
+            }
         }
     }
 }

@@ -37,8 +37,8 @@
             this.processStatusLb = new System.Windows.Forms.Label();
             this.cleanProcessBtn = new System.Windows.Forms.Button();
             this.appendStatusLb = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.sheetNameEdt = new System.Windows.Forms.TextBox();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // label1
@@ -123,29 +123,33 @@
             this.appendStatusLb.Size = new System.Drawing.Size(0, 13);
             this.appendStatusLb.TabIndex = 8;
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(273, 61);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(104, 13);
-            this.label2.TabIndex = 9;
-            this.label2.Text = "Filter by sheet name:";
-            // 
             // sheetNameEdt
             // 
-            this.sheetNameEdt.Location = new System.Drawing.Point(276, 78);
+            this.sheetNameEdt.Location = new System.Drawing.Point(273, 91);
             this.sheetNameEdt.Name = "sheetNameEdt";
             this.sheetNameEdt.Size = new System.Drawing.Size(100, 20);
             this.sheetNameEdt.TabIndex = 10;
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Checked = true;
+            this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox1.Location = new System.Drawing.Point(273, 68);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(128, 17);
+            this.checkBox1.TabIndex = 11;
+            this.checkBox1.Text = "Filter with sheet name";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.sheetNameEdt);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.appendStatusLb);
             this.Controls.Add(this.cleanProcessBtn);
             this.Controls.Add(this.processStatusLb);
@@ -172,8 +176,8 @@
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.Button cleanProcessBtn;
         private System.Windows.Forms.Label appendStatusLb;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox sheetNameEdt;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }
 
