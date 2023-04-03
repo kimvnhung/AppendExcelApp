@@ -153,7 +153,7 @@ namespace Append_Excel
                     mExcel = new Application();
                     Workbook wbResult = mExcel.Workbooks.Add();
                     Workbook wbHandle = mExcel.Workbooks.Add();
-                    await OpenDataFiles(selectedFiles, wbHandle);
+                    await OpenDataFiles(selectedFiles, wbHandle,sheetName);
                     if (await Appending(wbHandle))
                     {
                         await SaveFile(wbResult, wbHandle, savePath);
@@ -281,7 +281,7 @@ namespace Append_Excel
             PercentageProcess = 0;
         }
 
-        private async Task<bool> OpenDataFiles(List<string> selectedFiles, Workbook wbHandle)
+        private async Task<bool> OpenDataFiles(List<string> selectedFiles, Workbook wbHandle, string sheetName)
         {
             int deltaPercentage = 60/selectedFiles.Count;
             foreach (string file in selectedFiles)
@@ -291,7 +291,7 @@ namespace Append_Excel
                 {
                     try
                     {
-                        await OpenXLSXFiles(file, wbHandle);
+                        await OpenXLSXFiles(file, wbHandle,sheetName);
                     }
                     catch (Exception ex)
                     {
@@ -316,7 +316,7 @@ namespace Append_Excel
             return true;
         }
 
-        private async Task<bool> OpenXLSXFiles(string xlsxFiles, Workbook wbHandle)
+        private async Task<bool> OpenXLSXFiles(string xlsxFiles, Workbook wbHandle,string sheetName)
         {
             Workbook workbook = mExcel.Workbooks.Open(xlsxFiles);
             Console.WriteLine(xlsxFiles+" WorkSheet Count : "+workbook.Worksheets.Count);
@@ -324,6 +324,10 @@ namespace Append_Excel
             {
                 try
                 {
+                    if(sheetName != "" && worksheet.Name != sheetName)
+                    {
+                        continue;
+                    }
                     //PrintData(worksheet);
                     if (wbHandle.Worksheets[1].Name != "Result_Sheet")
                     {
