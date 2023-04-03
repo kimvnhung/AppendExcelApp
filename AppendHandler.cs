@@ -18,6 +18,9 @@ namespace Append_Excel
         public event EventHandler<string> ShowMessage;
         private static object mLocker = new object();
 
+        private string mTemplatesPath = Environment.GetFolderPath(Environment.SpecialFolder.Templates);
+
+
         private bool mIsFailedBecauseOfTooLong = false;
         private bool mIsProcessing = false;
         private int mPercentageProcess = 0;
@@ -104,15 +107,18 @@ namespace Append_Excel
                 Message = "Has no file selected";
                 return;
             }
+            mIsFailedBecauseOfTooLong = false;
             IsProcessing = true;
             //handling
             try
             {
+                mExcel = new Application();
                 var ext = System.IO.Path.GetExtension(savePath);
-               if (ext == ".csv")
+                if (ext == ".csv")
                 {
                     List<List<object>> totalData = new List<List<object>>();
                     List<object> header = new List<object>();
+                    List<string> templateFiles = new List<string>();
                     foreach(string filePath in selectedFiles)
                     {
                         var fileExt = Path.GetExtension(filePath); 
@@ -121,11 +127,7 @@ namespace Append_Excel
                             var result = await OpenXLSX(filePath, sheetName);
                             if(result != null && result.Count > 0)
                             {
-                                if(header.Count == 0)
-                                {
-                                    header = result[0];
-                                }
-                                totalData.AddRange(result.GetRange(1,result.Count-1));
+                                templateFiles.AddRange(result);
                             }
                         }else if (fileExt == ".csv")
                         {
@@ -141,16 +143,37 @@ namespace Append_Excel
                         }
                     }
 
+                    foreach(string filePath in templateFiles)
+                    {
+                        var fileExt = Path.GetExtension(filePath);
+                        if (fileExt == ".csv")
+                        {
+                            var result = await OpenCSV(filePath);
+                            if (result != null && result.Count > 0)
+                            {
+                                if (header.Count == 0)
+                                {
+                                    header = result[0];
+                                }
+                                totalData.AddRange(result.GetRange(1, result.Count - 1));
+                            }
+                            if (File.Exists(filePath))
+                            {
+                                File.Delete(filePath);
+                            }
+                        }
+                    }
+
                     if(totalData.Count > 0)
                     {
-                        await SaveCsv(totalData, savePath);
+                        await SaveCsv(totalData,header, savePath);
                         Message = "Saved file to " + savePath;
                         IsProcessing = false;
+                        mExcel.Quit();
                         return;
                     }
                 }else
                 {
-                    mExcel = new Application();
                     Workbook wbResult = mExcel.Workbooks.Add();
                     Workbook wbHandle = mExcel.Workbooks.Add();
                     await OpenDataFiles(selectedFiles, wbHandle,sheetName);
@@ -166,8 +189,8 @@ namespace Append_Excel
                     }
                     wbResult.Close(false);
                     wbHandle.Close(false);
-                    mExcel.Quit();
                 }
+                mExcel.Quit();
             }
             catch(Exception ex)
             {
@@ -179,44 +202,40 @@ namespace Append_Excel
             Message = "Append Failed"+(mIsFailedBecauseOfTooLong?". Please try save file as csv!":"");
         }
 
-        private async Task<List<List<object>>> OpenXLSX(string filePath,string sheetName)
+        private async Task<List<string>> OpenXLSX(string filePath,string sheetName)
         {
             // Loop through the rows and columns and put the data into a List<List<object>>
-            List<List<object>> data = new List<List<object>>();
+            List<string> tempFiles = new List<string>();
             Workbook workbook = mExcel.Workbooks.Open(filePath);
             Console.WriteLine(filePath + " WorkSheet Count : " + workbook.Worksheets.Count);
             foreach (Worksheet worksheet in workbook.Worksheets)
             {
                 try
                 {
-                    if(worksheet.Name == sheetName)
+                    if(sheetName == "" || worksheet.Name == sheetName)
                     {
-                        // Get the range of cells with data
-                        Range range = worksheet.UsedRange;
+                        // Set the CSV file format
+                        XlFileFormat csvFormat = XlFileFormat.xlCSV;
 
-                        
-                        for (int row = 1; row <= range.Rows.Count; row++)
+                        string templateFile = Path.Combine(mTemplatesPath, "temp_" + Path.GetFileNameWithoutExtension(filePath)+".csv");
+                        if (File.Exists(templateFile))
                         {
-                            List<object> rowData = new List<object>();
-                            for (int col = 1; col <= range.Columns.Count; col++)
-                            {
-                                Range cell = range.Cells[row, col];
-                                object value = cell.Value;
-                                rowData.Add(value);
-                            }
-                            data.Add(rowData);
+                            File.Delete(templateFile);
                         }
+                        // Export the worksheet to a CSV file
+                        worksheet.SaveAs(templateFile, csvFormat);
+                        tempFiles.Add(templateFile);
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                     workbook.Close(false);
-                    return new List<List<object>>();
+                    return new List<string>();
                 }
             }
             workbook.Close(false);
-            return data;
+            return tempFiles;
         }
 
         private async Task<List<List<object>>> OpenCSV(string filePath)
@@ -240,6 +259,15 @@ namespace Append_Excel
                 csvReader.ReadHeader();
 
                 var columnNames = csvReader.HeaderRecord;
+                List<object> header = new List<object>();
+                foreach(object col in columnNames)
+                {
+                   header.Add(col);
+                }
+                if(header.Count > 0)
+                {
+                    data.Add(header);
+                }
                 while (csvReader.Read())
                 {
                     List<object> rowData = new List<object>();
@@ -251,11 +279,33 @@ namespace Append_Excel
                     data.Add(rowData);  
                 }
             }
+
+            Console.WriteLine("Read csv count : " + data.Count+" filenmame : "+filePath);    
             return data;
         }
 
-        private async Task<bool> SaveCsv(List<List<object>> data, string savePath)
+        private async Task<bool> SaveCsv(List<List<object>> data, List<object> header, string savePath)
         {
+            using (var writer = new StreamWriter(savePath))
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                // Write the header
+                foreach (string columnName in header)
+                {
+                    csv.WriteField(columnName);
+                }
+                csv.NextRecord();
+
+                // Write the data
+                foreach (List<object> row in data)
+                {
+                    foreach (object value in row)
+                    {
+                        csv.WriteField(value);
+                    }
+                    csv.NextRecord();
+                }
+            }
             return true;
         }
 
@@ -530,6 +580,10 @@ namespace Append_Excel
             }catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                if(ex.Message.Contains("aren't the same size"))
+                {
+                    mIsFailedBecauseOfTooLong = true;
+                }
                 return false;
             }
             return true;
