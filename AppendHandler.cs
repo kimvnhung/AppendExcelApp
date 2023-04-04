@@ -109,6 +109,9 @@ namespace Append_Excel
                 Message = "Has no file selected";
                 return;
             }
+            Message = "";
+            EstimatedTime = 0;
+            ExecutedTime = 0;
 
             mIsFailedBecauseOfTooLong = false;
             IsProcessing = true;
@@ -121,8 +124,6 @@ namespace Append_Excel
                 var ext = System.IO.Path.GetExtension(savePath);
                 if (ext == ".csv")
                 {
-                    List<List<object>> totalData = new List<List<object>>();
-                    List<object> header = new List<object>();
                     List<string> templateFiles = new List<string>();
                     int xlsxCount = 0, csvCount = 0;
                     foreach (string filePath in selectedFiles)
@@ -140,10 +141,14 @@ namespace Append_Excel
                     }
 
                     int openXlsxDelta = (int)(50 * 0.75 / xlsxCount);
-                    int csvDelta = (75-openXlsxDelta*xlsxCount)/selectedFiles.Count;
+                    int csvDelta = (100-openXlsxDelta*xlsxCount)/selectedFiles.Count;
 
-                    foreach (string filePath in selectedFiles)
+                    List<string> appendFile = new List<string>();
+                    
+                    for (int i=0;i<selectedFiles.Count;i++)
                     {
+                        Message = "Reading xlsx files... ("+(i+1)+"/"+selectedFiles.Count+")";
+                        string filePath = selectedFiles[i];
                         //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                         var fileExt = Path.GetExtension(filePath); 
                         if (fileExt == ".xlsx" || fileExt == ".xls")
@@ -154,19 +159,31 @@ namespace Append_Excel
                                 templateFiles.AddRange(result);
                             }
                             PercentageProcess += openXlsxDelta;
-                        }else if (fileExt == ".csv")
+                        }else
                         {
-                            var result = await OpenCSV(filePath);
-                            if (result != null && result.Count > 0)
-                            {
-                                if (header.Count == 0)
-                                {
-                                    header = result[0];
-                                }
-                                totalData.AddRange(result.GetRange(1, result.Count - 1));
-                            }
-                            PercentageProcess += csvDelta;
+                            appendFile.Add(filePath);
                         }
+                    }
+
+                    appendFile.AddRange(templateFiles);
+
+                    if (File.Exists(savePath))
+                    {
+                        File.Delete(savePath);
+                    }
+
+
+                    
+                    for (int i=0;i<appendFile.Count;i++)
+                    {
+                        Message = "Appending csv file to " + savePath + " : " + (i + 1) + "/" + appendFile.Count;
+                        if (!await AppendCsvToFile(appendFile[i], savePath, i==0)) {
+                            Message = "Append Csv to "+savePath+" failed!";
+                            IsProcessing = false;
+                            mExcel.Quit();
+                            return;
+                        }
+                        PercentageProcess += csvDelta;
                     }
 
                     foreach(string filePath in templateFiles)
@@ -175,15 +192,6 @@ namespace Append_Excel
                         var fileExt = Path.GetExtension(filePath);
                         if (fileExt == ".csv")
                         {
-                            var result = await OpenCSV(filePath);
-                            if (result != null && result.Count > 0)
-                            {
-                                if (header.Count == 0)
-                                {
-                                    header = result[0];
-                                }
-                                totalData.AddRange(result.GetRange(1, result.Count - 1));
-                            }
                             if (File.Exists(filePath))
                             {
                                 File.Delete(filePath);
@@ -192,20 +200,19 @@ namespace Append_Excel
                         }
                     }
 
-                    if(totalData.Count > 0)
-                    {
-                        PercentageProcess = 75;
-                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
-                        await SaveCsv(totalData,header, savePath);
-                        Message = "Saved file to " + savePath;
-                        IsProcessing = false;
-                        mExcel.Quit();
-                        PercentageProcess = 100;
-                        //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
-                        TimeEstimating();
-                        return;
-                    }
-                }else
+                    //if(totalData.Count > 0)
+                    //{
+                    //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
+                    Message = "Saved file to " + savePath;
+                    IsProcessing = false;
+                    mExcel.Quit();
+                    PercentageProcess = 100;
+                    //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
+                    TimeEstimating();
+                    return;
+                    //}
+                }
+                else
                 {
                     //Console.WriteLine("tracking " + (DateTime.Now - start).TotalMilliseconds);
                     Workbook wbResult = mExcel.Workbooks.Add();
@@ -586,6 +593,59 @@ namespace Append_Excel
                 return true;
             }
             return false;
+        }
+
+        private async Task<bool> AppendCsvToFile(string sourceFile, string destinationFile, bool appendHeader = false)
+        {
+            // Create the CSV configuration object
+            var csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+                Delimiter = ",",
+                IgnoreBlankLines = true,
+                TrimOptions = TrimOptions.Trim
+            };
+
+            // Read the header row of the first CSV file
+            using (var reader = new StreamReader(sourceFile))
+            // open the file for appending
+            using (StreamWriter destinationWriter = new StreamWriter(destinationFile, true))
+            using (var csvReader = new CsvReader(reader, csvConfiguration))
+            {
+                csvReader.Read();
+                csvReader.ReadHeader();
+
+                var columnNames = csvReader.HeaderRecord;
+                if (appendHeader)
+                {
+                    string header = "";
+                    for (int i = 0; i < columnNames.Length; i++)
+                    {
+                        header += columnNames[i];
+                        if (i != columnNames.Length - 1) header += ",";
+                    }
+                    destinationWriter.WriteLine(header);
+                }
+                while (csvReader.Read())
+                {
+                    string newLine = "";
+                    for (int i=0; i< columnNames.Length; i++)
+                    {
+                        var value = csvReader.GetField(columnNames[i]);
+                        newLine += value;
+                        if(i != columnNames.Length - 1)
+                        {
+                            newLine += ",";
+                        }
+                    }
+                    if(newLine != "")
+                    {
+                        destinationWriter.WriteLine(newLine);
+                    }
+                }
+            }
+
+            return true;
         }
 
         private async Task<bool> Merged(Workbook wbHandle, int sheet1Index, int sheet2Index)

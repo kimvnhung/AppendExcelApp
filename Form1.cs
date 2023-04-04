@@ -146,6 +146,7 @@ namespace Append_Excel
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = saveDialog.FileName;
+                cleanProcessBtn.PerformClick();
                 mHandler.StartProcessing(mSelectedFile, fileName, checkBox1.Checked? sheetNameEdt.Text:"");
             }
         }
